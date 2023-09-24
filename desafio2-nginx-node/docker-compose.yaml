@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+
+  db:
+    platform: linux/x86_64
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+      # - MYSQL_USER=root
+    networks: 
+      - nodenet
+
+  nodeserver:
+    build:
+      context: ./node
+    # platform: linux/arm64
+    image: willfnovaes/node:latest
+    container_name: node
+    networks: 
+      - nodenet
+    volumes:
+      - ./node:/usr/src/app
+    tty: true
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+
+  nginx:
+    build:
+      context: ./nginx
+    image: willfnovaes/nginx:latest
+    container_name: nginx
+    networks: 
+      - nodenet
+    ports:
+      - "8080:80"
+
+networks:
+  nodenet: 
+    driver: bridge
